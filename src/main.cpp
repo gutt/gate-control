@@ -108,18 +108,22 @@ void setup()
     Log.noticeln("");
     
     if(udp.listen(12345)) {
+        Log.begin(LOG_LEVEL_VERBOSE, &CustomLogger);
         Log.noticeln("Main      # UDP Listen on port 12345");
     }
-    Log.begin(LOG_LEVEL_VERBOSE, &CustomLogger);
-
-    EasyOta.setup();
+    hw_layer.setup();
 
     http.setup();
     mqtt.setup();
-    hw_layer.setup();
+    EasyOta.setup();
     
-    close_gate_after_start.once(5, [&] () { 
-        gate_system.close_gate();
+    close_gate_after_start.once(5, [&] () {
+        if(!gate_system.state().is_contactor_enabled()) {
+            gate_system.close_gate();
+            return;
+        }
+        gate_system.state().set_state(gate_state_t::GATE_CLOSED);
+        gate_system.state().set_stopped(true);
     });
 
     // Wire.begin();

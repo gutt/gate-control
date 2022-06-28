@@ -17,10 +17,6 @@ public:
 
     void open_gate();
     void close_gate();
-
-    void open_gate_with_stop();
-    void close_gate_with_stop();
-
     void stop_gate();
 
     void enable_contactor();

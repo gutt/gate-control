@@ -29,6 +29,11 @@ void GateState::set_state(const gate_state_t &state)
     gate_state = state;
     Log.verboseln("GateState  # #### Change gate state [%s] ####", state_str().c_str());
 
+    if(gate_state == gate_state_t::GATE_OPEN || gate_state == gate_state_t::GATE_CLOSED) {
+        gate_stopped = true;
+    }
+    gate_stopped = false;
+
     if(update_state_handler != nullptr) {
         update_state_handler(*this);
     }

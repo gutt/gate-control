@@ -27,5 +27,5 @@ private:
     Ticker gate_switch_interlude_timer;
     
     bool click_is_processing = false;
-    int toggle_queue = 0;
+    int toggle = 0;
 };
