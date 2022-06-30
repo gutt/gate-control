@@ -24,9 +24,12 @@ void GateSystem::stop_gate()
 
 void GateSystem::open_gate()
 {
-    if((state_.state() == gate_state_t::GATE_OPENING && !state_.is_stopped()) || (state_.state() == gate_state_t::GATE_OPEN)) {
+
+    if((state_.state() == gate_state_t::GATE_OPENING && !state_.is_stopped()) 
+    || (state_.state() == gate_state_t::GATE_OPEN)) {
         return;
     }
+    // if gate is arleady closing ..
     if(state_.state() == gate_state_t::GATE_CLOSING) {
         hw->toggle_gate("STOPPING CURRENT CLOSING");
     }
@@ -53,19 +56,19 @@ void GateSystem::close_gate()
     blink_led(500);
 }
 
-void GateSystem::enable_contactor() 
+void GateSystem::enabled_contactor() 
 {
     Log.traceln("GateSystem # ==== Contactor ENABLED ====");
     state_.set_contactor(true);
     
-    if (state_.state() == gate_state_t::GATE_CLOSING) {
+    if (state_.state() != gate_state_t::GATE_CLOSED) {
         Log.traceln("GateSystem # ==== Contactor found that gate is closed after closing procedure ====");
         reset_process();
         state_.set_state(gate_state_t::GATE_CLOSED);
     }
 }
 
-void GateSystem::disable_contactor()
+void GateSystem::disabled_contactor()
 {
     Log.traceln("GateSystem # ==== Contactor DISABLED ====");
     state_.set_contactor(false);
@@ -73,8 +76,9 @@ void GateSystem::disable_contactor()
     if(state_.state() == gate_state_t::GATE_CLOSED) {
         Log.traceln("GateSystem # ==== Gate was closed when contactor changed state to False, reclose gate ====");
         reset_process();
+        hw->toggle_gate("GATE_WAS_CLOSED_WHEN_CONTRACTOR_CHANGE_TO_FALSE - stop opening");
         ensure_gate_closed();
-        blink_led(1000);
+        blink_led(5000);
     }
 }
 

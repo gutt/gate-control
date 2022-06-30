@@ -28,14 +28,14 @@ void HardwareLayer::setup()
         if(gate_control_handler_ == nullptr) {
             return;
         } 
-        gate_control_handler_->enable_contactor();
+        gate_control_handler_->enabled_contactor();
     });
     contactron_button.setReleasedHandler([this] (Button2 &) {
         Log.noticeln("HWLayer    # Contactron RELEASED");
         if(gate_control_handler_ == nullptr) {
             return;
         } 
-        gate_control_handler_->disable_contactor();
+        gate_control_handler_->disabled_contactor();
     });
 
     phisical_button_up.begin(BUTTON_PHISICAL_BUTTON_UP);

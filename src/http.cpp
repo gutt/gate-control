@@ -37,13 +37,13 @@ void Http::setup()
 
     server.on("/contractor_on", [&]() {
         Log.noticeln("Http        # CONTRACTOR ON request received");
-        s->enable_contactor();
+        s->enabled_contactor();
         render_home(s->state());
     });
 
     server.on("/contractor_off", [&]() {
         Log.noticeln("Http        # CONTRACTOR OFF request received");
-        s->disable_contactor();
+        s->disabled_contactor();
         render_home(s->state());
     });
 

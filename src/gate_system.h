@@ -19,8 +19,8 @@ public:
     void close_gate();
     void stop_gate();
 
-    void enable_contactor();
-    void disable_contactor();
+    void enabled_contactor();
+    void disabled_contactor();
 
     GateState &state();
 
