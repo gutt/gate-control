@@ -9,5 +9,3 @@ output -> transoptor (10k to 3.3V on arduino side PIN 4) 2k on PIN 1 output 5v
 
 4. input1 -> up 
 5. input2 -> down 
-
- mosquitto_sub -h 192.168.1.8 -p 1883 -u "darek" -P "wospamdK6" -t "homeassistant/#" -d
