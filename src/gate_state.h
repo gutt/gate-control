@@ -32,8 +32,8 @@ public:
     void set_contactor(bool state);
 
     void set_update_state_handler(update_state_handler_t handler);
-    
-    const String state_str() const;
+    String current_state_str() const;
+    static String state_str(const gate_state_t &state);
 
 public:
     int gate_close_check_count = 0;

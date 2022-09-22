@@ -7,13 +7,76 @@ GateSystem::GateSystem(HardwareLayer *hw_layer) :
 {
 }
 
+void GateSystem::set_state_undefined() {
+    Log.verboseln("GateSystem # Set gate state to undefined.");
+    current_mode = GateSystemMode::NORMAL_OPERATION;
+    state_.set_state(gate_state_t::GATE_UNDEFINED);
+    state_.set_stopped(true);    
+    reset_led();
+}
+
+void GateSystem::setup() 
+{
+
+}
+
+void GateSystem::loop()
+{
+    // in normal mode
+    if(current_mode == GateSystemMode::NORMAL_OPERATION) {
+        return;
+    }
+
+    // if mode changed to different mode than NORMAL
+    if(current_mode != last_mode) {
+        state_.gate_open_check_count = 0;
+        state_.gate_close_check_count = 0;
+ 
+        last_check_millis = millis();
+        last_mode = current_mode;
+    }
+
+    // for different than normal operation check timer..
+    if((millis() - last_check_millis > 1000 * gate_state_check_interval) &&  current_mode != GateSystemMode::NORMAL_OPERATION) {
+
+
+        if(current_mode == GateSystemMode::ENSURE_GATE_OPEN) {
+            // if contactor is not enabled - switch back to normal operation
+            if(!state_.is_contactor_enabled()) {
+                current_mode = GateSystemMode::NORMAL_OPERATION;
+                state_.set_state(gate_state_t::GATE_OPEN);
+            } else {
+                if (state_.gate_open_check_count >= check_count_limit) {
+                    set_state_undefined();
+                    return;
+                }
+                hw->toggle_gate("ENSURE_GATE_OPEN");
+
+                state_.gate_open_check_count++;
+            }
+        } else if(current_mode == GateSystemMode::ENSURE_GATE_CLOSED) {
+            // if contactor is now enabled - switch back to normal operation
+            if(state_.is_contactor_enabled()) {
+                current_mode = GateSystemMode::NORMAL_OPERATION;
+            } else {
+                if (state_.gate_close_check_count >= check_count_limit) {
+                    set_state_undefined();
+                    return;
+                }
+                hw->toggle_gate("ENSURE_GATE_CLOSE");
+                state_.gate_close_check_count++;
+            }
+        }
+
+        last_check_millis = millis();
+    }
+
+}
 void GateSystem::stop_gate()
 {
     if(state_.is_stopped()) {
         return;
     }
-    reset_process();
-
     state_.set_stopped(true);
 
     hw->toggle_gate("GATE_STOP");
@@ -27,15 +90,18 @@ void GateSystem::open_gate()
 
     if((state_.state() == gate_state_t::GATE_OPENING && !state_.is_stopped()) 
     || (state_.state() == gate_state_t::GATE_OPEN)) {
+        Log.verboseln("GateSystem  # #### IGNORE GATE OPEN because gate is in state [%s] ####", state_.current_state_str().c_str());
         return;
     }
     // if gate is arleady closing ..
     if(state_.state() == gate_state_t::GATE_CLOSING) {
         hw->toggle_gate("STOPPING CURRENT CLOSING");
     }
+
     Log.traceln("GateSystem # ---- OPEN the gate ----");
-    reset_process();
-    ensure_gate_opened();
+    state_.set_state(gate_state_t::GATE_OPENING);
+    hw->toggle_gate("OPEN GATE");
+    current_mode = GateSystemMode::ENSURE_GATE_OPEN;
 
     blink_led(50);
 }
@@ -43,6 +109,7 @@ void GateSystem::open_gate()
 void GateSystem::close_gate()
 {
     if((state_.state() == gate_state_t::GATE_CLOSING && !state_.is_stopped()) || (state_.state() == gate_state_t::GATE_CLOSED)) {
+        Log.verboseln("GateSystem  # #### IGNORE GATE CLOSE because gate is in state [%s] ####", state_.current_state_str().c_str());
         return;
     }
     if(state_.state() == gate_state_t::GATE_OPENING) {
@@ -50,9 +117,8 @@ void GateSystem::close_gate()
     }
 
     Log.traceln("GateSystem # ---- CLOSE the gate ----");
-    reset_process();
-    ensure_gate_closed();
-
+    hw->toggle_gate("CLOSE GATE");
+    current_mode = GateSystemMode::ENSURE_GATE_CLOSED;
     blink_led(500);
 }
 
@@ -63,7 +129,7 @@ void GateSystem::enabled_contactor()
     
     if (state_.state() != gate_state_t::GATE_CLOSED) {
         Log.traceln("GateSystem # ==== Contactor found that gate is closed after closing procedure ====");
-        reset_process();
+        current_mode = GateSystemMode::NORMAL_OPERATION;
         state_.set_state(gate_state_t::GATE_CLOSED);
     }
 }
@@ -75,86 +141,11 @@ void GateSystem::disabled_contactor()
 
     if(state_.state() == gate_state_t::GATE_CLOSED) {
         Log.traceln("GateSystem # ==== Gate was closed when contactor changed state to False, reclose gate ====");
-        reset_process();
         hw->toggle_gate("GATE_WAS_CLOSED_WHEN_CONTRACTOR_CHANGE_TO_FALSE - stop opening");
-        ensure_gate_closed();
+        state_.set_state(gate_state_t::GATE_CLOSING);
+        current_mode = GateSystemMode::ENSURE_GATE_CLOSED;
         blink_led(5000);
     }
-}
-
-void GateSystem::ensure_gate_closed()
-{
-    if (state_.gate_close_check_count >= check_count_limit) {
-        state_.set_state(gate_state_t::GATE_UNDEFINED);
-        state_.set_stopped(true);
-        reset_process();
-        return;
-    }
-
-    state_.set_state(gate_state_t::GATE_CLOSING);
-    state_.gate_close_check_count++;
-
-    hw->toggle_gate("ENSURE_GATE_CLOSED");
-
-    Log.verboseln("GateSystem # ***** Ensure gate as 'closed' check no. %d", state_.gate_close_check_count);
-    ensure_gate_closed_timer.once(
-        gate_state_check_interval, [this] () {             
-            ensure_gate_closed(); 
-    });
-}
-
-void GateSystem::ensure_gate_opened()
-{
-    if (state_.gate_open_check_count >= check_count_limit) {
-        state_.set_state(gate_state_t::GATE_UNDEFINED);
-        state_.set_stopped(true);
-        reset_process();
-        return;
-    }
-
-    if (!state_.is_contactor_enabled() && state_.gate_open_check_count != 0) {
-        state_.set_state(gate_state_t::GATE_OPEN); 
-        reset_process();
-        return;
-    }
-    state_.set_state(gate_state_t::GATE_OPENING);
-    state_.gate_open_check_count++;
-    
-    hw->toggle_gate("ENSURE_GATE_OPENED");
-
-    Log.verboseln("GateSystem # ***** Ensure gate as 'opened' check no. %d", state_.gate_open_check_count);
-    ensure_gate_opened_timer.once(
-        gate_state_check_interval, [this] () {
-            ensure_gate_opened();
-    });
-}
-
-void GateSystem::stop_ensure_gate_opened() {
-    ensure_gate_opened_timer.detach();    
-    if(state_.gate_open_check_count == 0) {
-        return;
-    }
-    state_.gate_open_check_count = 0;
-    Log.verboseln("GateSystem # ***** End ensure gate as 'opened'.");
-}
-
-void GateSystem::stop_ensure_gate_closed() {
-    ensure_gate_closed_timer.detach();    
-    if(state_.gate_close_check_count == 0) {
-        return;
-    }
-    state_.gate_close_check_count = 0;
-    Log.verboseln("GateSystem # ***** End ensure gate as 'closed'.");
-}
-
-void GateSystem::reset_process()
-{
-    Log.verboseln("GateSystem # Reset all ensure checks.");
-
-    stop_ensure_gate_opened();
-    stop_ensure_gate_closed();
-
-    reset_led();
 }
 
 GateState &GateSystem::state()

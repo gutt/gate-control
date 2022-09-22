@@ -59,6 +59,7 @@ size_t CustomLog::write(uint8_t character) {
     if(character == '\n') {
         udp.broadcast(last_line.c_str());
         last_line.replace("\n", "");
+        last_line.replace("\r", "");
         mqtt.send_log(last_line);
         last_line = "";
     }
@@ -116,27 +117,16 @@ void setup()
     http.setup();
     mqtt.setup();
     EasyOta.setup();
-    
-    close_gate_after_start.once(5, [&] () {
-        if(!gate_system.state().is_contactor_enabled()) {
-            gate_system.close_gate();
-            return;
-        }
-        gate_system.state().set_state(gate_state_t::GATE_CLOSED);
-        gate_system.state().set_stopped(true);
-    });
+    gate_system.setup();
 
-    // Wire.begin();
-    // sensor.setTimeout(500);
-    // if (!sensor.init()) {
-    //     Log.noticeln("Failed to detect and initialize sensor!");
-    // }
-    // sensor.setMeasurementTimingBudget(80000);
-    // sensor.setSignalRateLimit(0.2);
-    // sensor.setVcselPulsePeriod(VL53L0X::vcselPeriodType::VcselPeriodPreRange, 18);
-    // sensor.setVcselPulsePeriod(VL53L0X::vcselPeriodType::VcselPeriodFinalRange, 14);
-    
-    // sensor.startContinuous(100);
+    // close_gate_after_start.once(5, [&] () {
+    //     if(!gate_system.state().is_contactor_enabled()) {
+    //         gate_system.close_gate();
+    //         return;
+    //     }
+    //     gate_system.state().set_state(gate_state_t::GATE_CLOSED);
+    //     gate_system.state().set_stopped(true);
+    // });
     still_alive_timer.attach(60, [=] () {
         Log.noticeln("alive mark");
     });
@@ -148,10 +138,5 @@ void loop()
     mqtt.loop();
     hw_layer.loop();
     EasyOta.checkForUpload();
-
-    // Log.noticeln("Distance: %lu", sensor.readRangeContinuousMillimeters());
-    // if (sensor.timeoutOccurred()) { 
-    //     Log.warningln("Distance sensor timeout"); 
-    // }
-
+    gate_system.loop();
 }

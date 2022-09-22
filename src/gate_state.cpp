@@ -26,8 +26,10 @@ const gate_state_t &GateState::state() const
 
 void GateState::set_state(const gate_state_t &state) 
 {
+    Log.verboseln("GateState  # #### Change gate state from [%s]->[%s] ####", 
+        GateState::state_str(gate_state).c_str(), GateState::state_str(state).c_str()
+    );
     gate_state = state;
-    Log.verboseln("GateState  # #### Change gate state [%s] ####", state_str().c_str());
 
     if(gate_state == gate_state_t::GATE_OPEN || gate_state == gate_state_t::GATE_CLOSED) {
         gate_stopped = true;
@@ -64,16 +66,21 @@ void GateState::set_update_state_handler(update_state_handler_t handler) {
     update_state_handler = handler;
 }
 
-const String GateState::state_str() const
+String GateState::current_state_str() const
+{
+    return state_str(gate_state);
+}
+
+String GateState::state_str(const gate_state_t &state)
 {
     String gate_state_str;
-    if (gate_state == gate_state_t::GATE_OPEN) {
+    if (state == gate_state_t::GATE_OPEN) {
         gate_state_str = "open";
-    } else if (gate_state == gate_state_t::GATE_CLOSED) {
+    } else if (state == gate_state_t::GATE_CLOSED) {
         gate_state_str = "closed";
-    } else if (gate_state == gate_state_t::GATE_OPENING) {
+    } else if (state == gate_state_t::GATE_OPENING) {
         gate_state_str = "opening";
-    } else if (gate_state == gate_state_t::GATE_CLOSING) {
+    } else if (state == gate_state_t::GATE_CLOSING) {
         gate_state_str = "closing";
     } else {
         gate_state_str = "undefined";

@@ -74,7 +74,7 @@ void Http::render_home(const GateState &s)
     <form action=\"/contractor_off\" method=\"get\" id=\"form4\"></form> \
     <button type=\"submit\" form=\"form4\" value=\"Contractor off\">Contractor off</button>";
 
-    String gate_state_str = "<p>Gate state: " + s.state_str() + "</p>";
+    String gate_state_str = "<p>Gate state: " + s.current_state_str() + "</p>";
 
    if (s.is_stopped()) {
         gate_state_str += "<p>GATE STOPPED</p>";

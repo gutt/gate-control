@@ -1,8 +1,16 @@
 #pragma once
 
-#include <Button2.h>
+#include "button.h"
 #include "gate_control_handler.h"
 #include <Ticker.h>
+
+#define BUTTON_CONTACTRON_PIN  5 // D1
+#define BUTTON_PHISICAL_BUTTON_UP  14 // D5
+#define BUTTON_PHISICAL_BUTTON_DOWN 12 // D6
+#define GATE_SWITCH_PIN 4 // D2
+
+#define GATE_PULSE_TIME_MS 200
+#define GATE_PULSE_TIME_S_ZERO_MS 1000
 
 class HardwareLayer 
 {
@@ -16,9 +24,10 @@ public:
 
 private:    
     void click_gate();
-    Button2 contactron_button;
-    Button2 phisical_button_up;
-    Button2 phisical_button_down;
+    Button contactron_button { BUTTON_CONTACTRON_PIN, 2000 };
+
+    Button phisical_button_up { BUTTON_PHISICAL_BUTTON_UP, 500 };
+    Button phisical_button_down { BUTTON_PHISICAL_BUTTON_DOWN, 500 };
 
     GateControlHandler *gate_control_handler_ = nullptr;
     bool first_run = true;

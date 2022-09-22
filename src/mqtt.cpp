@@ -55,7 +55,7 @@ void MQTT::callback(char *topic, byte *payload, unsigned int length)
     for (unsigned int i = 0; i < length; i++) {
         payload_str += (char)payload[i];
     }
-    Log.verboseln(String("MQTT       # Incoming <- topic: " + topic_str + " payload_str: " + payload_str));
+    Log.verboseln(String("MQTT       # Incoming <- topic: " + topic_str + " payload_str: " + payload_str).c_str());
         
     if(topic_str.equals("homeassistant/cover/garage_gate/set")) {
       if(payload_str.equals("OPEN")) {
