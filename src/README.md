@@ -1,4 +1,3 @@
-STEROWANIE:
 ltv547
 output -> transoptor (10k to 3.3V on arduino side PIN 4) 2k on PIN 1 output 5v
 
