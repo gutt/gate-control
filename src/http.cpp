@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 #include <ArduinoLog.h>
-
+#include "version.h"
 #include "log.h"
 
 Http::Http(GateSystem *system) : s(system)
@@ -59,7 +59,8 @@ void Http::loop()
 
 void Http::render_home(const GateState &s)
 {
-    static String header_str = "<!DOCTYPE html><html><head><title>Gate door controller</title></head><body>";
+
+    static String header_str = "<!DOCTYPE html><html><head><title>Gate door controller, version: " + version_str + " </title></head><body>";
     static String footer_str = "</body></html>";
     
     static String form = \

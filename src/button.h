@@ -1,7 +1,7 @@
 #pragma once
 
 #ifndef button_h
-#define Button_h
+#define button_h
 
 #include <functional>
 #include "Arduino.h"
@@ -15,7 +15,7 @@ using button_callback_t = std::function<void()>;
 class Button {
 public:
     Button();
-    Button(uint8_t pin, unsigned int debounce_duration_ms = 50, uint8_t mode = INPUT_PULLUP, bool active_low = true);
+    Button(uint8_t pin, unsigned int debounce_duration_ms = 25, uint8_t mode = INPUT_PULLUP, bool active_low = true);
     void set_debounce_duration(unsigned int ms);
 
     void set_pressed_callback(button_callback_t f);
@@ -33,7 +33,7 @@ private:
     uint8_t previous_state_;
 
     unsigned long down_time_ms_;
-    unsigned int debounce_duration_ms_ = 50;
+    unsigned int debounce_duration_ms_ = 25;
 
     uint8_t pressed_state_;
 

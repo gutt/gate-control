@@ -36,41 +36,43 @@ void GateSystem::loop()
         last_mode = current_mode;
     }
 
-    // for different than normal operation check timer..
-    if((millis() - last_check_millis > 1000 * gate_state_check_interval) &&  current_mode != GateSystemMode::NORMAL_OPERATION) {
-
-
-        if(current_mode == GateSystemMode::ENSURE_GATE_OPEN) {
-            // if contactor is not enabled - switch back to normal operation
-            if(!state_.is_contactor_enabled()) {
-                current_mode = GateSystemMode::NORMAL_OPERATION;
-                state_.set_state(gate_state_t::GATE_OPEN);
-            } else {
-                if (state_.gate_open_check_count >= check_count_limit) {
-                    set_state_undefined();
-                    return;
-                }
-                hw->toggle_gate("ENSURE_GATE_OPEN");
-
-                state_.gate_open_check_count++;
-            }
-        } else if(current_mode == GateSystemMode::ENSURE_GATE_CLOSED) {
-            // if contactor is now enabled - switch back to normal operation
-            if(state_.is_contactor_enabled()) {
-                current_mode = GateSystemMode::NORMAL_OPERATION;
-            } else {
-                if (state_.gate_close_check_count >= check_count_limit) {
-                    set_state_undefined();
-                    return;
-                }
-                hw->toggle_gate("ENSURE_GATE_CLOSE");
-                state_.gate_close_check_count++;
-            }
-        }
-
-        last_check_millis = millis();
+    if (current_mode == GateSystemMode::NORMAL_OPERATION ||
+        (millis() - last_check_millis < 1000 * gate_state_check_interval)) {
+        return;
     }
 
+    last_check_millis = millis();
+
+    if(current_mode == GateSystemMode::ENSURE_GATE_OPEN) {
+        // if contactor is not enabled - switch back to normal operation
+        if(!state_.is_contactor_enabled()) {
+            current_mode = GateSystemMode::NORMAL_OPERATION;
+            state_.set_state(gate_state_t::GATE_OPEN);
+            return;
+        }
+        if (state_.gate_open_check_count >= check_count_limit) {
+            set_state_undefined();
+            return;
+        }
+        hw->toggle_gate("ENSURE_GATE_OPEN");
+        state_.gate_open_check_count++;
+        return;
+    } 
+    
+    if(current_mode == GateSystemMode::ENSURE_GATE_CLOSED) {
+        // if contactor is now enabled - switch back to normal operation
+        if(state_.is_contactor_enabled()) {
+            current_mode = GateSystemMode::NORMAL_OPERATION;
+            return
+        }
+        if (state_.gate_close_check_count >= check_count_limit) {
+            set_state_undefined();
+            return;
+        }
+        hw->toggle_gate("ENSURE_GATE_CLOSE");
+        state_.gate_close_check_count++;
+        return
+    }
 }
 void GateSystem::stop_gate()
 {

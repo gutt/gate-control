@@ -7,6 +7,7 @@
 #include "gate_system.h"
 #include "http.h"
 #include "mqtt.h"
+#include "version.h"
 
 // #include <Wire.h>
 // #include <VL53L0X.h>
@@ -93,12 +94,12 @@ void setup()
     Serial.begin(74880);
     delay(2000);
 
-    Log.setPrefix(print_prefix); // set prefix similar to NLog
-    Log.setSuffix(print_suffix); // set suffix 
+    Log.setPrefix(print_prefix);
+    Log.setSuffix(print_suffix); 
     Log.begin(LOG_LEVEL_VERBOSE, &Serial);
     // Log.begin(LOG_LEVEL_VERBOSE, &UDPLogger);
-    Log.setShowLevel(false);    // Do not show loglevel, we will do this in the prefix
-    
+    Log.setShowLevel(false);
+
     gate_system.state().set_update_state_handler([] (const GateState &s) {
         mqtt.send_state(s);
     });
