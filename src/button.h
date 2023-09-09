@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef button_h
-#define button_h
-
 #include <functional>
 #include "Arduino.h"
 
@@ -40,4 +37,3 @@ private:
     bool pressed_active_;
     bool last_change_pressed_ = false;
 };
-#endif

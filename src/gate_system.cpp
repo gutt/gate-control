@@ -63,7 +63,7 @@ void GateSystem::loop()
         // if contactor is now enabled - switch back to normal operation
         if(state_.is_contactor_enabled()) {
             current_mode = GateSystemMode::NORMAL_OPERATION;
-            return
+            return;
         }
         if (state_.gate_close_check_count >= check_count_limit) {
             set_state_undefined();
@@ -71,7 +71,7 @@ void GateSystem::loop()
         }
         hw->toggle_gate("ENSURE_GATE_CLOSE");
         state_.gate_close_check_count++;
-        return
+        return;
     }
 }
 void GateSystem::stop_gate()
