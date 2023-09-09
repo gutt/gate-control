@@ -63,8 +63,6 @@ void HardwareLayer::toggle_gate(String caller_debug_info)
 
 void HardwareLayer::click_gate()
 {
-    // Log.noticeln("HWLayer    # Toggle gate started, queued clicks: %d", toggle_queue);
-
     click_is_processing = true;
 
     Log.noticeln("HWLayer    # gate signal up..");
