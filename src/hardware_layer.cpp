@@ -56,7 +56,7 @@ void HardwareLayer::loop()
     phisical_button_up.loop();
     phisical_button_down.loop();
 
-    if(click_is_processing == false && gate_events.size() != 0) {
+    if(click_is_processing == false && !gate_events.empty()) {
         Log.noticeln("HWLayer    # POP event from queue: %s", gate_events.front().event_name.c_str());
         gate_events.pop();
         click_gate();
