@@ -9,14 +9,11 @@ GateState::GateState()
 
 }
 
-GateState::GateState(const GateState &s) 
+GateState::GateState(const GateState &s)
 {
-    gate_state = s.gate_state; 
+    gate_state = s.gate_state;
     gate_stopped = s.gate_stopped;
-    contactor = s.contactor;
-
-    gate_close_check_count = s.gate_close_check_count;
-    gate_open_check_count = s.gate_open_check_count;
+    contactron = s.contactron;
 }
 
 const gate_state_t &GateState::state() const
@@ -24,21 +21,32 @@ const gate_state_t &GateState::state() const
     return gate_state;
 }
 
-void GateState::set_state(const gate_state_t &state) 
+void GateState::set_open()
 {
-    Log.verboseln("GateState  # #### Change gate state from [%s]->[%s] ####", 
+    set_state(gate_state_t::GATE_OPEN);
+}
+
+void GateState::set_closed()
+{
+    set_state(gate_state_t::GATE_CLOSED);
+}
+
+void GateState::set_closing()
+{
+    set_state(gate_state_t::GATE_CLOSING);
+}
+
+void GateState::set_opening()
+{
+    set_state(gate_state_t::GATE_OPENING);
+}
+
+void GateState::set_state(const gate_state_t &state)
+{
+    Log.verboseln("GateState  # #### Change gate state from [%s]->[%s] ####",
         GateState::state_str(gate_state).c_str(), GateState::state_str(state).c_str()
     );
     gate_state = state;
-
-    if(gate_state == gate_state_t::GATE_OPEN || gate_state == gate_state_t::GATE_CLOSED) {
-        gate_stopped = true;
-    }
-    gate_stopped = false;
-
-    if(update_state_handler != nullptr) {
-        update_state_handler(*this);
-    }
 }
 
 bool GateState::is_stopped() const
@@ -46,29 +54,50 @@ bool GateState::is_stopped() const
     return gate_stopped;
 }
 
-void GateState::set_stopped(bool stopped) 
+void GateState::set_stopped(bool stopped)
 {
     Log.verboseln("GateState  # #### Change gate stopped to: %s ####", stopped ? "true": "false");
     gate_stopped = stopped;
 }
 
-bool GateState::is_contactor_enabled() const
+bool GateState::is_contactron_enabled() const
 {
-    return contactor;
+    return contactron;
 }
 
-void GateState::set_contactor(bool state) 
+void GateState::set_contactron(bool state)
 {
-    contactor = state;
-}
-
-void GateState::set_update_state_handler(update_state_handler_t handler) {
-    update_state_handler = handler;
+    contactron = state;
 }
 
 String GateState::current_state_str() const
 {
     return state_str(gate_state);
+}
+
+bool GateState::is_closed() const
+{
+    return gate_state == gate_state_t::GATE_CLOSED;
+}
+
+bool GateState::is_open() const
+{
+    return gate_state == gate_state_t::GATE_OPEN;
+}
+
+bool GateState::is_closing() const
+{
+    return gate_state == gate_state_t::GATE_CLOSING;
+}
+
+bool GateState::is_opening() const
+{
+    return gate_state == gate_state_t::GATE_OPENING;
+}
+
+bool GateState::is_undefined() const
+{
+    return gate_state == gate_state_t::GATE_UNDEFINED;
 }
 
 String GateState::state_str(const gate_state_t &state)

@@ -13,38 +13,43 @@ enum gate_state_t
     GATE_OPENING
 };
 
-class GateState 
+class GateState
 {
 public:
-    using update_state_handler_t = std::function<void(const GateState&)>;
-
     GateState();
     GateState(const GateState &s1);
- 
-    const gate_state_t &state() const;
 
-    void set_state(const gate_state_t &state);
+
+    bool is_closed() const;
+    bool is_open() const;
+    bool is_closing() const;
+    bool is_opening() const;
 
     bool is_stopped() const;
+    bool is_undefined() const;
+
+    void set_closed();
+    void set_open();
+    void set_closing();
+    void set_opening();
+
     void set_stopped(bool stopped);
 
-    bool is_contactor_enabled() const;
-    void set_contactor(bool state);
+    bool is_contactron_enabled() const;
+    void set_contactron(bool state);
 
-    void set_update_state_handler(update_state_handler_t handler);
     String current_state_str() const;
     static String state_str(const gate_state_t &state);
 
-public:
-    int gate_close_check_count = 0;
-    int gate_open_check_count = 0;
-    
 private:
-    gate_state_t gate_state = gate_state_t::GATE_UNDEFINED;
-    bool gate_stopped = false;    
-    bool contactor = false;
+    void set_state(const gate_state_t &state);
+    const gate_state_t &state() const;
 
-    update_state_handler_t update_state_handler = nullptr;
+    gate_state_t gate_state = gate_state_t::GATE_UNDEFINED;
+    bool gate_stopped = false;
+    bool contactron = false;
+
+
 
 };
 

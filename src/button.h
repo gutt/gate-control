@@ -19,8 +19,9 @@ public:
     void set_released_callback(button_callback_t f);
 
     void loop();
+    bool is_pressed();
 
-private: 
+private:
     uint8_t read_state();
 
     button_callback_t pressed_callback = NULL;

@@ -3,7 +3,7 @@
 #include "button.h"
 #include "ArduinoLog.h"
 
-void HardwareLayer::set_gate_control_handler(GateControlHandler *gate_control_handler) 
+void HardwareLayer::set_gate_control_handler(GateControlHandler *gate_control_handler)
 {
     gate_control_handler_ = gate_control_handler;
 }
@@ -16,65 +16,66 @@ void HardwareLayer::setup()
         Log.noticeln("HWLayer    # Contactron ENABLED");
         if(gate_control_handler_ == nullptr) {
             return;
-        } 
-        gate_control_handler_->enabled_contactor();
+        }
+        gate_control_handler_->enabled_contactron();
     });
     contactron_button.set_released_callback([this] () {
         Log.noticeln("HWLayer    # Contactron RELEASED");
         if(gate_control_handler_ == nullptr) {
             return;
-        } 
-        gate_control_handler_->disabled_contactor();
+        }
+        gate_control_handler_->disabled_contactron();
     });
 
     phisical_button_up.set_pressed_callback([this] () {
         Log.noticeln("HWLayer    # ===========> Gate UP button clicked");
         if(gate_control_handler_ == nullptr) {
             return;
-        } 
+        }
         gate_control_handler_->open_gate();
     });
     phisical_button_down.set_pressed_callback([this] () {
         Log.noticeln("HWLayer    # ===========> Gate DOWN button clicked");
         if(gate_control_handler_ == nullptr) {
             return;
-        } 
+        }
         gate_control_handler_->close_gate();
     });
 }
 
-void HardwareLayer::loop() 
+void HardwareLayer::loop()
 {
     contactron_button.loop();
     phisical_button_up.loop();
     phisical_button_down.loop();
 
-    if(click_is_processing == false && toggle != 0) {
-        toggle--;
+    if(click_is_processing == false && gate_events.size() != 0) {
+        Log.noticeln("HWLayer    # POP event from queue: %s", gate_events.front().event_name.c_str());
+        gate_events.pop();
         click_gate();
     }
 }
 
-void HardwareLayer::toggle_gate(String caller_debug_info) 
+void HardwareLayer::toggle_gate(String caller_debug_info)
 {
-    Log.noticeln("HWLayer    # TOGGLE gate (%s)", caller_debug_info.c_str());
-    toggle++;
+    Log.noticeln("HWLayer    # PUSH gate event (%s)", caller_debug_info.c_str());
+    gate_events.push(GateEvent { caller_debug_info});
 }
 
 void HardwareLayer::click_gate()
 {
     click_is_processing = true;
 
-    Log.noticeln("HWLayer    # gate signal up..");
+    Log.traceln("HWLayer    # gate signal up..");
     digitalWrite(GATE_SWITCH_PIN, 1);
- 
+
     gate_switch_timer.once_ms(GATE_PULSE_TIME_MS, [=] () {
-    Log.noticeln("HWLayer    # gate signal down..");
+    Log.traceln("HWLayer    # gate signal down..");
         digitalWrite(GATE_SWITCH_PIN, 0);
         gate_switch_interlude_timer.once_ms(GATE_PULSE_TIME_S_ZERO_MS, [=] () {
-            Log.noticeln("HWLayer    # gate signal finished");
+            Log.traceln("HWLayer    # gate signal finished");
             click_is_processing = false;
         });
     });
-    
+
 }

@@ -15,8 +15,6 @@ public:
 
     virtual void stop_gate() = 0;
 
-    virtual void enabled_contactor() = 0;
-    virtual void disabled_contactor() = 0;
-
-    virtual const GateState &state() = 0;
+    virtual void enabled_contactron() = 0;
+    virtual void disabled_contactron() = 0;
 };

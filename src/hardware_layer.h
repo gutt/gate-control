@@ -2,6 +2,7 @@
 
 #include "button.h"
 #include "gate_control_handler.h"
+#include <queue>
 #include <Ticker.h>
 
 #define BUTTON_CONTACTRON_PIN  5 // D1
@@ -12,7 +13,10 @@
 #define GATE_PULSE_TIME_MS 200
 #define GATE_PULSE_TIME_S_ZERO_MS 1000
 
-class HardwareLayer 
+struct GateEvent {
+    String event_name;
+};
+class HardwareLayer
 {
 public:
     void setup();
@@ -22,19 +26,20 @@ public:
 
     void set_gate_control_handler(GateControlHandler *gate_control_handler);
 
-private:    
+private:
     void click_gate();
     Button contactron_button { BUTTON_CONTACTRON_PIN, 2000 };
 
-    Button phisical_button_up { BUTTON_PHISICAL_BUTTON_UP, 500 };
-    Button phisical_button_down { BUTTON_PHISICAL_BUTTON_DOWN, 500 };
+    Button phisical_button_up { BUTTON_PHISICAL_BUTTON_UP, 50 };
+    Button phisical_button_down { BUTTON_PHISICAL_BUTTON_DOWN, 50 };
 
     GateControlHandler *gate_control_handler_ = nullptr;
     bool first_run = true;
 
     Ticker gate_switch_timer;
     Ticker gate_switch_interlude_timer;
-    
+
     bool click_is_processing = false;
-    int toggle = 0;
+    std::queue<GateEvent> gate_events;
+
 };

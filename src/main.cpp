@@ -14,62 +14,19 @@
 
 // VL53L0X sensor;
 
-
 HardwareLayer hw_layer;
 GateSystem gate_system(&hw_layer);
 Http http(&gate_system);
-MQTT mqtt(mqtt_server, mqtt_port, mqtt_user, mqtt_password, &gate_system);
-
-
-void print_timestamp(Print* _logOutput) {
-
-  // Division constants
-  const unsigned long MSECS_PER_SEC       = 1000;
-  const unsigned long SECS_PER_MIN        = 60;
-  const unsigned long SECS_PER_HOUR       = 3600;
-  const unsigned long SECS_PER_DAY        = 86400;
-
-  // Total time
-  const unsigned long msecs               =  millis() ;
-  const unsigned long secs                =  msecs / MSECS_PER_SEC;
-
-  // Time in components
-  const unsigned long mili_secs =  msecs % MSECS_PER_SEC;
-  const unsigned long seconds = secs  % SECS_PER_MIN ;
-  const unsigned long minutes = (secs  / SECS_PER_MIN) % SECS_PER_MIN;
-  const unsigned long hours = (secs  % SECS_PER_DAY) / SECS_PER_HOUR;
-
-  // Time as string
-  char timestamp[20];
-  sprintf(timestamp, "%02lu:%02lu:%02lu.%03lu ", hours, minutes, seconds, mili_secs);
-  _logOutput->print(timestamp);
-}
+Stream &serial_out = Serial;
+MQTT mqtt(mqtt_server, mqtt_port, mqtt_user, mqtt_password);
+CustomLog custom_logger(serial_out, mqtt);
 
 void print_prefix(Print* _logOutput, int logLevel) {
     print_timestamp(_logOutput);
 }
 
-void print_suffix(Print* _logOutput, int logLevel) {
-    _logOutput->print("\r");
-}
-
-String last_line;
-
-size_t CustomLog::write(uint8_t character) {
-    Serial.print((char)character);
-    if(character == '\n') {
-        udp.broadcast(last_line.c_str());
-        last_line.replace("\n", "");
-        last_line.replace("\r", "");
-        mqtt.send_log(last_line);
-        last_line = "";
-    }
-    last_line += (char)character;
-    return 1;
-};
-
-void setup_wifi() 
-{  
+void setup_wifi()
+{
     Log.noticeln("Main       # Configuring wifi (SSID: %s)...", ssid);
 
     WiFi.begin(ssid, password);
@@ -91,28 +48,46 @@ void setup_wifi()
 void setup()
 {
     pinMode(LED_BUILTIN, OUTPUT);
-    Serial.begin(74880);
-    delay(2000);
 
-    Log.setPrefix(print_prefix);
-    Log.setSuffix(print_suffix); 
-    Log.begin(LOG_LEVEL_VERBOSE, &Serial);
-    // Log.begin(LOG_LEVEL_VERBOSE, &UDPLogger);
-    Log.setShowLevel(false);
-
-    gate_system.state().set_update_state_handler([] (const GateState &s) {
-        mqtt.send_state(s);
+    gate_system.set_gate_open_handler([&] () {
+        Log.noticeln("Main       # Gate is OPEN");
+        mqtt.send_gate_open();
     });
-    hw_layer.set_gate_control_handler(&gate_system);
+
+    gate_system.set_gate_opening_handler([&] () {
+        Log.noticeln("Main       # Gate is OPENING");
+        mqtt.send_gate_opening();
+    });
+
+    gate_system.set_gate_close_handler([&] () {
+        Log.noticeln("Main       # Gate is CLOSED");
+        mqtt.send_gate_close();
+    });
+
+    gate_system.set_gate_closing_handler([&] () {
+        Log.noticeln("Main       # Gate is CLOSING");
+        mqtt.send_gate_closing();
+    });
+
+    gate_system.set_gate_stopped_handler([&] () {
+        Log.noticeln("Main       # Gate is STOPPED");
+        mqtt.send_gate_stopped();
+    });
+
+    Serial.begin(74880);
+    Log.setPrefix(print_prefix);
+    Log.setShowLevel(false);
+    Log.begin(LOG_LEVEL_VERBOSE, &custom_logger);
 
     setup_wifi();
+
     Log.noticeln("GarageApp version: %d.%d (build date: %s %s)", VERSION_MAJOR, VERSION_MINOR, __DATE__, __TIME__);
     Log.noticeln("");
-    
-    if(udp.listen(12345)) {
-        Log.begin(LOG_LEVEL_VERBOSE, &CustomLogger);
-        Log.noticeln("Main      # UDP Listen on port 12345");
-    }
+    mqtt.set_gate_system(&gate_system);
+
+    hw_layer.set_gate_control_handler(&gate_system);
+
+
     hw_layer.setup();
 
     http.setup();
@@ -120,14 +95,6 @@ void setup()
     EasyOta.setup();
     gate_system.setup();
 
-    // close_gate_after_start.once(5, [&] () {
-    //     if(!gate_system.state().is_contactor_enabled()) {
-    //         gate_system.close_gate();
-    //         return;
-    //     }
-    //     gate_system.state().set_state(gate_state_t::GATE_CLOSED);
-    //     gate_system.state().set_stopped(true);
-    // });
     still_alive_timer.attach(60, [=] () {
         Log.noticeln("alive mark");
     });
