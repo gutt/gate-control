@@ -12,6 +12,7 @@
 
 #define GATE_PULSE_TIME_MS 200
 #define GATE_PULSE_TIME_S_ZERO_MS 1000
+#define MAX_GATE_EVENTS 10
 
 struct GateEvent {
     String event_name;
@@ -21,6 +22,7 @@ class HardwareLayer
 public:
     void setup();
     void loop();
+    ~HardwareLayer();
 
     void toggle_gate(String caller_debug_info);
 
