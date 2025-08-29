@@ -8,6 +8,13 @@ void HardwareLayer::set_gate_control_handler(GateControlHandler *gate_control_ha
     gate_control_handler_ = gate_control_handler;
 }
 
+HardwareLayer::~HardwareLayer()
+{
+    // Safely detach timers to prevent callbacks after destruction
+    gate_switch_timer.detach();
+    gate_switch_interlude_timer.detach();
+}
+
 void HardwareLayer::setup()
 {
     pinMode(GATE_SWITCH_PIN, OUTPUT);
@@ -49,7 +56,7 @@ void HardwareLayer::loop()
     phisical_button_up.loop();
     phisical_button_down.loop();
 
-    if(click_is_processing == false && gate_events.size() != 0) {
+    if(click_is_processing == false && !gate_events.empty()) {
         Log.noticeln("HWLayer    # POP event from queue: %s", gate_events.front().event_name.c_str());
         gate_events.pop();
         click_gate();
@@ -58,6 +65,10 @@ void HardwareLayer::loop()
 
 void HardwareLayer::toggle_gate(String caller_debug_info)
 {
+    if(gate_events.size() >= MAX_GATE_EVENTS) {
+        Log.warningln("HWLayer    # Gate event queue full, dropping event: %s", caller_debug_info.c_str());
+        return;
+    }
     Log.noticeln("HWLayer    # PUSH gate event (%s)", caller_debug_info.c_str());
     gate_events.push(GateEvent { caller_debug_info});
 }
@@ -69,10 +80,10 @@ void HardwareLayer::click_gate()
     Log.traceln("HWLayer    # gate signal up..");
     digitalWrite(GATE_SWITCH_PIN, 1);
 
-    gate_switch_timer.once_ms(GATE_PULSE_TIME_MS, [=] () {
-    Log.traceln("HWLayer    # gate signal down..");
+    gate_switch_timer.once_ms(GATE_PULSE_TIME_MS, [this] () {
+        Log.traceln("HWLayer    # gate signal down..");
         digitalWrite(GATE_SWITCH_PIN, 0);
-        gate_switch_interlude_timer.once_ms(GATE_PULSE_TIME_S_ZERO_MS, [=] () {
+        gate_switch_interlude_timer.once_ms(GATE_PULSE_TIME_S_ZERO_MS, [this] () {
             Log.traceln("HWLayer    # gate signal finished");
             click_is_processing = false;
         });

@@ -95,7 +95,7 @@ void setup()
     EasyOta.setup();
     gate_system.setup();
 
-    still_alive_timer.attach(60, [=] () {
+    still_alive_timer.attach(60, [] () {
         Log.noticeln("alive mark");
     });
 }
